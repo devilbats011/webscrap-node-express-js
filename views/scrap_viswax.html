@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="https://cdn-icons-png.flaticon.com/512/3307/3307767.png"
+      type="image/x-icon"
+    />
+    <title>Scrap Viswax</title>
+
+    <style>
+      .main {
+        margin: 1rem;
+      }
+
+      table.belang {
+        font-family: arial, sans-serif;
+        border-collapse: collapse;
+        width: 500px;
+        overflow: auto;
+      }
+
+      td,
+      th {
+        border: 1px solid #dddddd;
+        text-align: left;
+        padding: 8px;
+      }
+
+      tr.belang:nth-child(even) {
+        background-color: #dddddd;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app_basic">
+      <main class="main">
+        <h2>Vis Wax</h2>
+        <table id="smeTableId" ref="smeTableRef" >
+          <tr>
+            <th>Slots</th>
+            <th>Possible Slots</th>
+          </tr>
+          <tr v-for="(sme,i) in arrayComputed">
+            <td>{{sme.slotName}}</td>
+            <td>
+              <table>
+                <tr v-for="(text,i) in  sme.textArray" >
+                  <td>{{text}}</td>
+                </tr>
+              </table>
+            
+
+            </td>
+          </tr>
+        </table>
+        <br>
+        <div >
+          <button v-on:click="htmlJsonToExcel">Excel Download</button>
+        </div>
+        <!-- <button type="button" v-on:click="onexport_TEST_JSON_TO_EXCEL">
+          Test Excel download
+        </button> -->
+        <h5>Date Today : {{timestamp}}</h5>
+      </main>
+    </div>
+  </body>
+</html>
+
+<script
+  lang="javascript"
+  src="https://cdn.sheetjs.com/xlsx-0.19.1/package/dist/xlsx.full.min.js"
+></script>
+<!-- <script lang="javascript" src="FileSaver.min.js"></script> -->
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js"
+></script>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+  new Vue({
+    el: "#app_basic",
+    data: {
+      timestamp: ` ${new Date().toLocaleString()}`,
+      arr: {},
+    },
+    mounted() {
+      this.fecthData();
+    },
+    methods: {
+      async fecthData() {
+        this.arr = await fetch("http://localhost:3000/api/viswax")
+          .then((response) => response.json())
+          .then((data) => data);
+
+        //test..
+        // this.arrayComputed.forEach((item) => {
+        //   const tempTextArray = item.textArray.map((text) => {
+        //     return { possible_rune_slot: text };
+        //   });
+        //   console.log(tempTextArray);
+        // });
+      },
+      htmlJsonToExcel() {
+        var wb = XLSX.utils.book_new();
+        this.arrayComputed.forEach((item) => {
+          const tempTextArray = item.textArray.map((text) => {
+            return { 'possible slot': text };
+          });
+          var ws = XLSX.utils.json_to_sheet(tempTextArray);
+          XLSX.utils.book_append_sheet(wb, ws, item.slotName);
+        });
+
+        // export Excel file
+        XLSX.writeFile(wb, "viswax.xlsx");
+      },
+      onexport_TEST_JSON_TO_EXCEL() {
+        // https://lovemewithoutall.github.io/it/json-to-excel/
+        // On Click Excel download button
+        const datas = {
+          // We will make a Workbook contains 2 Worksheets
+          animals: [
+            { name: "Cat", category: "animal" },
+            { name: "Dog", category: "animal" },
+            { name: "Guinea pigs", category: "animal" },
+          ],
+          pokemons: [
+            { name: "Pikachu", category: "pokemon" },
+            { name: "Arbok", category: "pokemon" },
+            { name: "Eevee", category: "pokemon" },
+          ],
+        };
+        // export json to Worksheet of Excel
+        // only array possible
+        var animalWS = XLSX.utils.json_to_sheet(datas.animals);
+        var pokemonWS = XLSX.utils.json_to_sheet(datas.pokemons);
+
+        // A workbook is the name given to an Excel file
+        var wb = XLSX.utils.book_new(); // make Workbook of Excel
+
+        // add Worksheet to Workbook
+        // Workbook contains one or more worksheets
+        XLSX.utils.book_append_sheet(wb, animalWS, "animals"); // sheetAName is name of Worksheet
+        XLSX.utils.book_append_sheet(wb, pokemonWS, "pokemons");
+
+        // export Excel file
+        XLSX.writeFile(wb, "book.xlsx"); // name of the file is 'book.xlsx'
+      },
+    },
+    computed: {
+      arrayComputed() {
+        return Object.values(this.arr);
+      },
+    },
+  });
+</script>
